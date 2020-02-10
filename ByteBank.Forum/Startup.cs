@@ -5,6 +5,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
 using Owin;
 using System.Data.Entity;
+using System.Web.WebSockets;
 using ByteBank.Forum.App_Start.Identity;
 
 [assembly: OwinStartup(typeof(ByteBank.Forum.Startup))]
@@ -42,6 +43,14 @@ namespace ByteBank.Forum
                         ObrigatorioLowerCase = true,
                         ObrigatorioUpperCase = true
                     };
+
+                    userManager.EmailService = new EmailServico();
+
+                    var dataProtectionProvider = opcoes.DataProtectionProvider;
+                    var dataProtectorProviderCreated = dataProtectionProvider.Create("ByteBank.Forum");
+
+                    userManager.UserTokenProvider =  new DataProtectorTokenProvider<UsuarioAplicacao>(dataProtectorProviderCreated);
+
                     return userManager;
                 });
         }

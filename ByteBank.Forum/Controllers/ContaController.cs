@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using ByteBank.Forum.Models;
@@ -47,22 +48,60 @@ namespace ByteBank.Forum.Controllers
                 var usuario = await UserManager.FindByEmailAsync(modelo.Email);
 
                 if (usuario !=  null)
-                    return RedirectToAction("Index", "Home");
+                    return View("AguardandoConfirmacao");
 
                 var resultado = await UserManager.CreateAsync(novoUsuario, modelo.Password);
 
                 if (resultado.Succeeded)
-                    return RedirectToAction("Index", "Home");
+                {
+                    await EnviarEmailDeConfirmacaoAsync(novoUsuario);
+                    return View("AguardandoConfirmacao");
+                }
                 else
+                {
                     AdicionarErros(resultado);
+                }
+                    
             }
             return View(modelo);
+        }
+
+        public async Task<ActionResult> ConfirmacaoEmail(string usuarioId, string token)
+        {
+            if (usuarioId == null || token == null)
+                return View("Error");
+
+            var resultado = await UserManager.ConfirmEmailAsync(usuarioId, token);
+
+            if (resultado.Succeeded)
+                return RedirectToAction("Index", "Home");
+            else
+                return View("Error"); 
+
         }
 
         private void AdicionarErros(IdentityResult resultado)
         {
             foreach (var error in resultado.Errors)
                 ModelState.AddModelError("", error);
+        }
+
+        private async Task EnviarEmailDeConfirmacaoAsync(UsuarioAplicacao usuario)
+        {
+            var token = await UserManager.GenerateEmailConfirmationTokenAsync(usuario.Id);
+
+            var linkDeCallBack = Url.Action(
+                "ConfirmacaoEmail",
+                "Conta",
+                new {usuarioId = usuario.Id, token = token},
+                Request.Url.Scheme
+            );
+
+            await UserManager.SendEmailAsync(
+                usuario.Id,
+                "Forum ByteBank - Confirmacao e-mail",
+                $"Bem vindo ao forum ByteBank, use o codigo {linkDeCallBack}, para confirmar o seu endereço de e-mail"
+            );
         }
     }
 }
