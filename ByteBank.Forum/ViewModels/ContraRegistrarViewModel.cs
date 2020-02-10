@@ -9,7 +9,7 @@ namespace ByteBank.Forum.ViewModels
 
         [Required]
         [Display(Name = "Nome Completo")]
-        public string FullName { get; set; }
+        public string NomeCompleto { get; set; }
 
         [Required]
         [EmailAddress]
