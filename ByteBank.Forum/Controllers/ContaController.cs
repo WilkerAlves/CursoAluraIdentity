@@ -106,7 +106,7 @@ namespace ByteBank.Forum.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> Login()
+        public ActionResult Login()
         {
             return View();
         }
@@ -158,6 +158,70 @@ namespace ByteBank.Forum.Controllers
         {
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             return RedirectToAction("Index", "Home");
+        }
+
+        public ActionResult EsqueciSenha()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> EsqueciSenha(ContaEsqueciSenhaViewModel modelo)
+        {
+            if (ModelState.IsValid)
+            {
+                var usuario = await UserManager.FindByEmailAsync(modelo.Email);
+
+                if (usuario != null)
+                {
+                    var token = await UserManager.GeneratePasswordResetTokenAsync(usuario.Id);
+                    
+                    var linkDeCallBack = Url.Action(
+                        "ConfirmacaoAlteracaoSenha",
+                        "Conta",
+                        new { usuarioId = usuario.Id, token = token },
+                        Request.Url.Scheme
+                    );
+
+                    await UserManager.SendEmailAsync(
+                        usuario.Id,
+                        "Forum ByteBank - Alteração de Senha",
+                        $"Clique aqui {linkDeCallBack}, para alterar a sua senha"
+                    );
+                }
+
+                return View("EmailAlteracaoSenhaEnviado");
+            }
+            return View();
+        }
+
+        
+        public ActionResult ConfirmacaoAlteracaoSenha(string usuarioId, string token)
+        {
+            var modelo = new ConfirmacaoAlteracaoSenhaViewModel
+            {
+                UsuarioId = usuarioId,
+                Token = token
+            };
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ConfirmacaoAlteracaoSenha(ConfirmacaoAlteracaoSenhaViewModel modelo)
+        {
+            if (ModelState.IsValid)
+            {
+                var resultadoAlteracao = await UserManager.ResetPasswordAsync(modelo.UsuarioId, modelo.Token, modelo.NovoPassword);
+
+                if (resultadoAlteracao.Succeeded)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+
+                AdicionarErros(resultadoAlteracao);
+            }
+
+            return View();
         }
 
         private void AdicionarErros(IdentityResult resultado)
