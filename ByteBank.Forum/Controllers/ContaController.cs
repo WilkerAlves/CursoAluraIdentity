@@ -130,10 +130,15 @@ namespace ByteBank.Forum.Controllers
                 switch (signInResultado)
                 {
                     case SignInStatus.Success:
+                        if (!usuario.EmailConfirmed)
+                        {
+                            AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+                            return View("AguardandoConfirmacao");
+                        }
                         return RedirectToAction("Index", "Home");
                     case SignInStatus.LockedOut:
                         var senhaCorreta = await UserManager.CheckPasswordAsync(usuario, modelo.Password);
-
+                        
                         if (senhaCorreta)
                             ModelState.AddModelError("", "A conta está bloqueada");
                         else
