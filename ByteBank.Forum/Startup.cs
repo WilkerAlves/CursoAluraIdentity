@@ -1,13 +1,13 @@
-﻿using ByteBank.Forum.Models;
+﻿using System;
+using ByteBank.Forum.App_Start.Identity;
+using ByteBank.Forum.Models;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin;
+using Microsoft.Owin.Security.Cookies;
 using Owin;
 using System.Data.Entity;
-using System.Web.WebSockets;
-using ByteBank.Forum.App_Start.Identity;
-using Microsoft.Owin.Security.Cookies;
 
 [assembly: OwinStartup(typeof(ByteBank.Forum.Startup))]
 namespace ByteBank.Forum
@@ -51,6 +51,9 @@ namespace ByteBank.Forum
                     var dataProtectorProviderCreated = dataProtectionProvider.Create("ByteBank.Forum");
 
                     userManager.UserTokenProvider =  new DataProtectorTokenProvider<UsuarioAplicacao>(dataProtectorProviderCreated);
+                    userManager.MaxFailedAccessAttemptsBeforeLockout = 3;
+                    userManager.DefaultAccountLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                    userManager.UserLockoutEnabledByDefault = true;
 
                     return userManager;
                 });

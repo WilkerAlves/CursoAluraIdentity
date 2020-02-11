@@ -124,13 +124,22 @@ namespace ByteBank.Forum.Controllers
                     usuario.UserName,
                     modelo.Password,
                     isPersistent: modelo.ContinuarLogado,
-                    shouldLockout: false
+                    shouldLockout: true
                 );
 
                 switch (signInResultado)
                 {
                     case SignInStatus.Success:
                         return RedirectToAction("Index", "Home");
+                    case SignInStatus.LockedOut:
+                        var senhaCorreta = await UserManager.CheckPasswordAsync(usuario, modelo.Password);
+
+                        if (senhaCorreta)
+                            ModelState.AddModelError("", "A conta está bloqueada");
+                        else
+                            return SenhaOuUsuarioInvalidos();
+                    
+                        break;
                     default:
                         return SenhaOuUsuarioInvalidos();
                 }
